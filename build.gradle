@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.5'
     id 'io.spring.dependency-management' version '1.1.6'
+    id 'org.barfuin.gradle.jacocolog' version '3.1.0'
 }
 
 group = 'com'
@@ -12,6 +13,15 @@ java {
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
+ext {
+    // Minimal Coverage
+    minimumCoveragePerFile = 0.8
+    filesExcludedFromCoverage = [
+            "**/*CosmoCats.*",
+            "**/config/*Configuration.*"
+    ]
+}
+
 
 configurations {
     compileOnly {
@@ -22,6 +32,9 @@ configurations {
 repositories {
     mavenCentral()
 }
+
+apply from: "${rootProject.projectDir}/gradle/test.gradle"
+apply from: "${rootProject.projectDir}/gradle/jacoco.gradle"
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
