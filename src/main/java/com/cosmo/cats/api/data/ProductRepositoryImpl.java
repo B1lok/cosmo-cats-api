@@ -46,6 +46,10 @@ public class ProductRepositoryImpl implements ProductRepository {
         products.add(product);
         return product;
     }
+    public void resetRepository() {
+        products.clear();
+        products.addAll(buildAllProductsMock());
+    }
 
     private List<Product> buildAllProductsMock() {
         return List.of(

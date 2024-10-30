@@ -9,9 +9,9 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface ProductDtoMapper {
 
-  List<ProductDto> toProductDto(List<Product> products);
+    List<ProductDto> toProductDto(List<Product> products);
 
-  ProductDto toProductDto(Product product);
+    ProductDto toProductDto(Product product);
 
-  Product toProduct(ProductCreationDto productDto);
+    Product toProduct(ProductCreationDto productDto);
 }

@@ -6,11 +6,10 @@ import lombok.Builder;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class ProductCreationDto {
   String name;
   String description;
   BigDecimal price;
   Integer stockQuantity;
-  Long categoryId;
 }
