@@ -4,10 +4,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CosmoCatsApiApplicationTests {
-
-  @Test
-  void contextLoads() {
-  }
-
+public class CosmoCatsApiApplicationTest {
+    @Test
+    void contextLoads() {
+        CosmoCatsApiApplication.main(new String[] {});
+    }
 }
