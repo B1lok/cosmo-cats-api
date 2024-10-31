@@ -14,12 +14,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.cosmo.cats.api.data.ProductRepository;
 import com.cosmo.cats.api.dto.product.ProductCreationDto;
+import com.cosmo.cats.api.dto.product.ProductUpdateDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,7 +38,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 public class ProductControllerIT {
     private final String URL = "/api/v1/products";
-    private final ProductCreationDto PRODUCT_CREATION = buildProductCreationDto();
+    private final ProductCreationDto PRODUCT_CREATION = buildProductCreationDto("Star mock");
+    private final ProductUpdateDto PRODUCT_UPDATE = buildProductUpdateDto("Star mock");
+
     @Autowired
     MockMvc mockMvc;
     @Autowired
@@ -42,9 +48,34 @@ public class ProductControllerIT {
     @Autowired
     ObjectMapper objectMapper;
 
-    private ProductCreationDto buildProductCreationDto() {
-        return ProductCreationDto.builder().name("Mock").description("Mock description").price(
+    private static ProductCreationDto buildProductCreationDto(String name) {
+        return ProductCreationDto.builder().name(name).description("Mock description").price(
                 BigDecimal.valueOf(777)).stockQuantity(10).build();
+    }
+
+    private static ProductUpdateDto buildProductUpdateDto(String name) {
+        return ProductUpdateDto.builder().name(name).description("Update description").price(
+                BigDecimal.valueOf(126)).stockQuantity(12).build();
+    }
+
+    private static Stream<ProductCreationDto> buildUnValidProductCreationDto() {
+        return Stream.of(
+                buildProductCreationDto(""),
+                buildProductCreationDto("Name without required words"),
+                buildProductCreationDto(null),
+                buildProductCreationDto("galaxy mock").toBuilder().price(BigDecimal.valueOf(0.002))
+                        .build(),
+                buildProductCreationDto("galaxy").toBuilder().stockQuantity(-2).build());
+    }
+
+    private static Stream<ProductUpdateDto> buildUnValidProductUpdateDto() {
+        return Stream.of(
+                buildProductUpdateDto(""),
+                buildProductUpdateDto("Name without required words"),
+                buildProductUpdateDto(null),
+                buildProductUpdateDto("galaxy mock").toBuilder().price(BigDecimal.valueOf(0.002))
+                        .build(),
+                buildProductUpdateDto("galaxy").toBuilder().stockQuantity(-2).build());
     }
 
     @BeforeEach
@@ -52,10 +83,9 @@ public class ProductControllerIT {
         productRepository.resetRepository();
     }
 
-
     @Test
     @SneakyThrows
-    void getProductsTest() {
+    void shouldReturnAllProducts() {
         var expectedResult = productRepository.getAll();
 
         mockMvc.perform(get(URL)).andExpectAll(status().isOk(),
@@ -64,7 +94,7 @@ public class ProductControllerIT {
 
     @Test
     @SneakyThrows
-    void getProductByIDTest() {
+    void shouldReturnProductById() {
 
         mockMvc.perform(get(URL + "/{id}", 2L))
                 .andExpectAll(status().isOk(),
@@ -74,7 +104,7 @@ public class ProductControllerIT {
 
     @Test
     @SneakyThrows
-    void throwExceptionGetByIdTest() {
+    void shouldThrowProductNotFoundException() {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
                 String.format(PRODUCT_NOT_FOUND_MESSAGE, "4"));
         problemDetail.setType(URI.create("product-not-found"));
@@ -87,7 +117,7 @@ public class ProductControllerIT {
 
     @Test
     @SneakyThrows
-    void deleteProductTest() {
+    void shouldDeleteProduct() {
         mockMvc.perform(delete(URL + "/{id}", 1L))
                 .andExpect(status().isNoContent());
 
@@ -98,7 +128,7 @@ public class ProductControllerIT {
 
     @Test
     @SneakyThrows
-    void createProductTest() {
+    void shouldCreateProduct() {
         var result = mockMvc.perform(
                 post(URL + "/category/{id}", 2L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -111,9 +141,22 @@ public class ProductControllerIT {
         assertThat(length).isEqualTo(4);
     }
 
+    @ParameterizedTest
+    @MethodSource(value = "buildUnValidProductCreationDto")
+    @SneakyThrows
+    void shouldThrowMethodArgumentNotValidException(ProductCreationDto productCreationDto) {
+        mockMvc.perform(post(URL + "/category/{id}", 2L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                productCreationDto)))
+                .andExpectAll(status().isBadRequest(),
+                        jsonPath("$.invalidParams").isNotEmpty());
+
+    }
+
     @Test
     @SneakyThrows
-    void shouldThrowDuplicateProductNameExceptionTest() {
+    void shouldThrowDuplicateProductNameException() {
         ProblemDetail problemDetail =
                 ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, String.format(
                         PRODUCT_WITH_NAME_EXIST_MESSAGE, "Star Map"
@@ -124,21 +167,31 @@ public class ProductControllerIT {
         mockMvc.perform(post(URL + "/category/{id}", 2L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                PRODUCT_CREATION.toBuilder().name("Star Map").build())))
+                                buildProductCreationDto("Star Map"))))
                 .andExpectAll(status().isBadRequest(),
                         content().json(objectMapper.writeValueAsString(problemDetail)));
     }
 
     @Test
     @SneakyThrows
-    void updateProductTest() {
-        mockMvc.perform(put(URL +"/{id}/category/{categoryId}", 1, 2)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(PRODUCT_CREATION)))
+    void shouldUpdateProduct() {
+        mockMvc.perform(put(URL + "/{id}/category/{categoryId}", 1, 2)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(PRODUCT_UPDATE)))
                 .andExpectAll(status().isOk(),
-                        content().json(objectMapper.writeValueAsString(PRODUCT_CREATION)));
-
-
-
+                        content().json(objectMapper.writeValueAsString(PRODUCT_UPDATE)));
     }
+
+    @ParameterizedTest
+    @MethodSource(value = "buildUnValidProductUpdateDto")
+    @SneakyThrows
+    void shouldThrowUnValidArgumentsExceptionUpdate(ProductUpdateDto productUpdateDto) {
+        mockMvc.perform(post(URL + "/category/{id}", 2L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                productUpdateDto)))
+                .andExpectAll(status().isBadRequest(),
+                        jsonPath("$.invalidParams").isNotEmpty());
+    }
+
 }

@@ -46,7 +46,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void getAllProductsTest() {
+    void shouldReturnAllProducts() {
         when(productRepository.getAll()).thenReturn(MOCK_PRODUCTS);
         var result = productService.getProducts();
 
@@ -55,7 +55,7 @@ public class ProductServiceTest {
 
     @ParameterizedTest
     @MethodSource("provideId")
-    void getProductTest(Integer id) {
+    void shouldReturnProductById(Integer id) {
         when(productRepository.getById(idCaptor.capture())).thenAnswer(
                 inv -> Optional.of(MOCK_PRODUCTS.get(id)));
 
@@ -63,18 +63,18 @@ public class ProductServiceTest {
         var result = productService.getProduct(actualId);
         assertNotNull(result.getCategory());
         assertEquals(actualId, result.getId());
-        assertEquals("Mock" + actualId, result.getName());
+        assertEquals("Star Mock" + actualId, result.getName());
     }
 
     @Test
-    void getNonExistentProductTest() {
+    void shouldThrowProductNotFoundExceptionWhenIdIsNonExistent() {
         when(productRepository.getById(idCaptor.capture())).thenReturn(Optional.empty());
 
         assertThrows(ProductNotFoundException.class, () -> productService.getProduct(4L));
     }
 
     @Test
-    void createProductTest() {
+    void shouldCreateProductSuccessfully() {
         when(productRepository.getAll()).thenReturn(MOCK_PRODUCTS);
         when(productRepository.addProduct(productArgumentCaptor.capture())).thenAnswer(
                 inv -> inv.getArgument(0));
@@ -87,7 +87,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void createProductWithExistentNameTest() {
+    void shouldThrowDuplicateProductNameExceptionWhenCreatingWithExistingName() {
         when(productRepository.getAll()).thenReturn(
                 List.of(MOCK_PRODUCT.toBuilder().id(1L).build()));
 
@@ -96,7 +96,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void updateProductTest() {
+    void shouldUpdateProductSuccessfully() {
         when(productRepository.getAll()).thenReturn(MOCK_PRODUCTS);
         when(productRepository.update(idCaptor.capture(),
                 productArgumentCaptor.capture())).thenAnswer(inv ->
@@ -111,7 +111,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void updateProductWithNonExistentIdTest() {
+    void shouldUpdateProductWithNewIdWhenProductIdIsNonExistent() {
         when(productRepository.getAll()).thenReturn(MOCK_PRODUCTS);
         when(productRepository.addProduct(productArgumentCaptor.capture())).thenAnswer(
                 inv -> inv.getArgument(0));
@@ -124,13 +124,14 @@ public class ProductServiceTest {
     }
 
     @Test
-    void shouldThrowDuplicateNameExceptionTest() {
+    void shouldThrowDuplicateProductNameExceptionWhenUpdatingWithExistingName() {
         when(productRepository.getAll()).thenReturn(MOCK_PRODUCTS);
         when(productRepository.getById(anyLong())).thenReturn(Optional.of(MOCK_PRODUCTS.get(0)));
 
         assertThrows(DuplicateProductNameException.class,
                 () -> productService.updateProduct(1L, MOCK_PRODUCTS.get(1), 2L));
     }
+
 
     private Product buildProductCreation() {
         return Product.builder().name("NonExistent name").price(BigDecimal.valueOf(1223))
@@ -141,7 +142,7 @@ public class ProductServiceTest {
         return List.of(
                 Product.builder()
                         .id(1L)
-                        .name("Mock1")
+                        .name("Star Mock1")
                         .description("Description mock1")
                         .price(BigDecimal.valueOf(199.99))
                         .stockQuantity(10)
@@ -149,7 +150,7 @@ public class ProductServiceTest {
                         .build(),
                 Product.builder()
                         .id(2L)
-                        .name("Mock2")
+                        .name("Star Mock2")
                         .description("Description mock2")
                         .price(BigDecimal.valueOf(299.99))
                         .stockQuantity(20)
@@ -157,7 +158,7 @@ public class ProductServiceTest {
                         .build(),
                 Product.builder()
                         .id(3L)
-                        .name("Mock3")
+                        .name("Star Mock3")
                         .description("Description mock3")
                         .price(BigDecimal.valueOf(399.99))
                         .stockQuantity(30)
