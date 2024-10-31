@@ -55,7 +55,7 @@ public class ProductController {
   @PutMapping("/{id}/category/{categoryId}")
   public ResponseEntity<ProductDto> updateProduct(
       @PathVariable Long id, @PathVariable Long categoryId,
-      @RequestBody @Valid ProductCreationDto productDto) {
+      @RequestBody @Valid ProductUpdateDto productDto) {
     return ResponseEntity.ok(productDtoMapper.toProductDto(
         productService.updateProduct(id, productDtoMapper.toProduct(productDto), categoryId)));
   }
