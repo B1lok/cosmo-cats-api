@@ -3,7 +3,12 @@ package com.cosmo.cats.api.web;
 
 import static com.cosmo.cats.api.service.exception.DuplicateProductNameException.PRODUCT_WITH_NAME_EXIST_MESSAGE;
 import static com.cosmo.cats.api.service.exception.ProductNotFoundException.PRODUCT_NOT_FOUND_MESSAGE;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.reset;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -12,12 +17,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.cosmo.cats.api.WireMockConfIt;
 import com.cosmo.cats.api.data.ProductRepository;
 import com.cosmo.cats.api.dto.product.ProductCreationDto;
 import com.cosmo.cats.api.dto.product.ProductUpdateDto;
+import com.cosmo.cats.api.dto.product.advisor.MarketComparisonDto;
+import com.cosmo.cats.api.dto.product.advisor.ProductAdvisorResponseDto;
+import com.cosmo.cats.api.service.ProductAdvisorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.util.List;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,20 +37,20 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@DirtiesContext
+
 @AutoConfigureMockMvc
-public class ProductControllerIT {
+public class ProductControllerIT extends WireMockConfIt {
     private final String URL = "/api/v1/products";
     private final ProductCreationDto PRODUCT_CREATION = buildProductCreationDto("Star mock");
     private final ProductUpdateDto PRODUCT_UPDATE = buildProductUpdateDto("Star mock");
+    private final ProductAdvisorResponseDto PRODUCT_ADVISOR_RESPONSE =
+            buildProductAdvisorResponseDto();
 
     @Autowired
     MockMvc mockMvc;
@@ -47,6 +58,8 @@ public class ProductControllerIT {
     ProductRepository productRepository;
     @Autowired
     ObjectMapper objectMapper;
+    @SpyBean
+    ProductAdvisorService productAdvisorService;
 
     private static ProductCreationDto buildProductCreationDto(String name) {
         return ProductCreationDto.builder().name(name).description("Mock description").price(
@@ -81,6 +94,7 @@ public class ProductControllerIT {
     @BeforeEach
     void setUp() {
         productRepository.resetRepository();
+        reset(productAdvisorService);
     }
 
     @Test
@@ -193,5 +207,51 @@ public class ProductControllerIT {
                 .andExpectAll(status().isBadRequest(),
                         jsonPath("$.invalidParams").isNotEmpty());
     }
+
+    @Test
+    @SneakyThrows
+    void shouldComparePrices() {
+        stubFor(WireMock.post("/api/v1/price-comparison")
+                .willReturn(aResponse().withStatus(200)
+                        .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                        .withBody(objectMapper.writeValueAsBytes(PRODUCT_ADVISOR_RESPONSE))));
+
+        mockMvc.perform(get(URL + "/{id}/price-advisor", 2)).andExpectAll(status().isOk(),
+                content().json(objectMapper.writeValueAsString(PRODUCT_ADVISOR_RESPONSE)));
+    }
+
+    @Test
+    @SneakyThrows
+    void shouldThrowProductAdvisorApiException() {
+        ProblemDetail problemDetail =
+                ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, "Error while getting price advice");
+        problemDetail.setType(URI.create("price-advisor-error"));
+        problemDetail.setTitle("Could not get price advice");
+
+        stubFor(WireMock.post("/api/v1/price-comparison")
+                .willReturn(aResponse().withStatus(500)));
+
+        mockMvc.perform(get(URL + "/{id}/price-advisor", 2)).andExpectAll(status().isServiceUnavailable(),
+                content().json(objectMapper.writeValueAsString(problemDetail)));
+    }
+
+    private ProductAdvisorResponseDto buildProductAdvisorResponseDto() {
+        return ProductAdvisorResponseDto.builder()
+                .originalMarketPrice(BigDecimal.valueOf(100))
+                .comparisons(
+                        List.of(
+                                MarketComparisonDto.builder()
+                                        .market("EU")
+                                        .price(BigDecimal.valueOf(102.50))
+                                        .priceDifference(BigDecimal.valueOf(2.50))
+                                        .build(),
+                                MarketComparisonDto.builder()
+                                        .market("US")
+                                        .price(BigDecimal.valueOf(95.00))
+                                        .priceDifference(BigDecimal.valueOf(-5.10))
+                                        .build())
+                ).build();
+    }
+
 
 }
