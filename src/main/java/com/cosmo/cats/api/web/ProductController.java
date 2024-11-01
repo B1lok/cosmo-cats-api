@@ -1,9 +1,12 @@
 package com.cosmo.cats.api.web;
 
 
+import com.cosmo.cats.api.domain.product.Product;
 import com.cosmo.cats.api.dto.product.ProductCreationDto;
 import com.cosmo.cats.api.dto.product.ProductDto;
 import com.cosmo.cats.api.dto.product.ProductUpdateDto;
+import com.cosmo.cats.api.dto.product.advisor.ProductAdvisorResponseDto;
+import com.cosmo.cats.api.service.ProductAdvisorService;
 import com.cosmo.cats.api.service.ProductService;
 import com.cosmo.cats.api.web.mapper.ProductDtoMapper;
 import jakarta.validation.Valid;
@@ -27,6 +30,7 @@ public class ProductController {
 
   private final ProductService productService;
   private final ProductDtoMapper productDtoMapper;
+  private final ProductAdvisorService productAdvisorService;
 
   @GetMapping
   public ResponseEntity<List<ProductDto>> getProducts() {
@@ -36,6 +40,12 @@ public class ProductController {
   @GetMapping("/{id}")
   public ResponseEntity<ProductDto> getProduct(@PathVariable Long id) {
     return ResponseEntity.ok(productDtoMapper.toProductDto(productService.getProduct(id)));
+  }
+
+  @GetMapping("/{id}/price-advisor")
+  public ResponseEntity<ProductAdvisorResponseDto> getProductWithPriceAdvisor(@PathVariable Long id) {
+    Product product = productService.getProduct(id);
+    return ResponseEntity.ok(productAdvisorService.getProductPriceAdvice(product));
   }
 
   @PostMapping("/category/{id}")
