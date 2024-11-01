@@ -43,7 +43,7 @@ public class ProductServiceImpl implements ProductService {
             throw new DuplicateProductNameException(updatedProduct.getName());
         }
         Product productWithUpdates = buildProduct(updatedProduct, categoryId, id);
-        productRepository.update(id, updatedProduct);
+        productRepository.update(id, productWithUpdates);
         return productWithUpdates;
     }
 
