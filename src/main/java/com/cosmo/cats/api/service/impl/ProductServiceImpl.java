@@ -42,7 +42,10 @@ public class ProductServiceImpl implements ProductService {
                 && !updatedProduct.getName().equals(existingProduct.getName())) {
             throw new DuplicateProductNameException(updatedProduct.getName());
         }
-        Product productWithUpdates = buildProduct(updatedProduct, categoryId, id);
+        Product productWithUpdates = updatedProduct.toBuilder()
+                .category(Category.builder().id(categoryId).name("Space item").build())
+                .id(id)
+                .build();
         productRepository.update(id, productWithUpdates);
         return productWithUpdates;
     }

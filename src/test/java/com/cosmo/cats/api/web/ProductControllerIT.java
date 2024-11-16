@@ -48,7 +48,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class ProductControllerIT extends WireMockConfIt {
     private final String URL = "/api/v1/products";
     private final ProductCreationDto PRODUCT_CREATION = buildProductCreationDto("Star mock");
-    private final ProductUpdateDto PRODUCT_UPDATE = buildProductUpdateDto("Star mock");
+    private final ProductUpdateDto PRODUCT_UPDATE = buildProductUpdateDto("Star Helmet");
     private final ProductAdvisorResponseDto PRODUCT_ADVISOR_RESPONSE =
             buildProductAdvisorResponseDto();
 

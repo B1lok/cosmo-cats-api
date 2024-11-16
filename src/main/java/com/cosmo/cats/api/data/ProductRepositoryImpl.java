@@ -55,7 +55,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         return List.of(
                 Product.builder()
                         .id(1L)
-                        .name("Space Helmet")
+                        .name("Star Helmet")
                         .description("A durable helmet for intergalactic travel.")
                         .price(BigDecimal.valueOf(299.99))
                         .stockQuantity(50)
