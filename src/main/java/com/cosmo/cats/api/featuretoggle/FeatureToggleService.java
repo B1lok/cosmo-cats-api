@@ -1,20 +1,28 @@
 package com.cosmo.cats.api.featuretoggle;
 
 
-import org.springframework.beans.factory.annotation.Value;
+import com.cosmo.cats.api.config.FeatureToggleProperties;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Service;
 
 @Service
 public class FeatureToggleService {
-    @Value("${feature.cosmo-cats.enabled}")
-    private boolean isCosmoCatsEnabled;
-    @Value("${feature.kittyProducts.enabled}")
-    private boolean isKittyProductsEnabled;
 
-    public boolean checkCosmoCats(){
-        return isCosmoCatsEnabled;
-    }
-    public boolean checkKittyProducts(){
-        return isKittyProductsEnabled;
-    }
+  private final ConcurrentHashMap<String, Boolean> featureToggles;
+
+  public FeatureToggleService(FeatureToggleProperties featureToggleProperties) {
+    featureToggles = new ConcurrentHashMap<>(featureToggleProperties.getToggles());
+  }
+
+  public boolean check(String featureName) {
+    return featureToggles.getOrDefault(featureName, false);
+  }
+
+  public void enable(String featureName) {
+    featureToggles.put(featureName, true);
+  }
+
+  public void disable(String featureName) {
+    featureToggles.put(featureName, false);
+  }
 }

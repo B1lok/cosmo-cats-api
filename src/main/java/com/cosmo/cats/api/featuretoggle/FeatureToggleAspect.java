@@ -15,19 +15,8 @@ public class FeatureToggleAspect {
 
     @Before("execution(* com.cosmo.cats.api.service.ProductService.getProductsByWearer(..)) && args(wearer)")
     public void handleWearerFeature(Wearer wearer) {
-        switch (wearer) {
-            case CATS -> {
-                if (!featureToggleService.checkCosmoCats()) {
-                    throw new FeatureIsDisabledException("Feature for 'CATS' is disabled");
-                }
-            }
-            case KITTIES -> {
-                if (!featureToggleService.checkKittyProducts()) {
-                    throw new FeatureIsDisabledException("Feature for 'KITTIES' is disabled");
-                }
-            }
-            default -> {
-            }
+        if (!featureToggleService.check(wearer.getWearerName())) {
+            throw new FeatureIsDisabledException("Feature for '" + wearer.name() + "' is disabled");
         }
     }
 }
