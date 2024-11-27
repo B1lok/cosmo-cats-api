@@ -5,3 +5,5 @@ databaseChangeLog:
       file: liquibase/db.changelog-init-order-tables.yaml
   - include:
       file: liquibase/db.changelog-modify-order-table.yaml
+  - include:
+      file: liquibase/db.changelog-insert-category-table.yaml
