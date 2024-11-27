@@ -26,5 +26,5 @@ public class CategoryEntity {
   private String name;
 
   @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
-  private List<Product> products;
+  private List<ProductEntity> products;
 }

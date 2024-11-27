@@ -21,7 +21,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "product")
-public class Product {
+public class ProductEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_id_gen")
