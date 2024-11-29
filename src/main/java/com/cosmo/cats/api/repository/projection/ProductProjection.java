@@ -9,4 +9,5 @@ public interface ProductProjection {
   String getDescription();
 
   Wearer getWearer();
+  Double getPrice();
 }

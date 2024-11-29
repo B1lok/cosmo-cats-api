@@ -8,7 +8,7 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class OrderContext {
-  String cartId;
-  List<OrderEntry> entries;
-  BigDecimal totalPrice;
+    String cartId;
+    List<OrderEntry> entries;
+    BigDecimal totalPrice;
 }
