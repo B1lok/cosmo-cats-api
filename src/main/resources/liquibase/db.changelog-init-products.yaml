@@ -12,7 +12,6 @@ databaseChangeLog:
                   type: BIGINT
                   constraints:
                     primaryKey: true
-                    nullable: false
               - column:
                   name: name
                   type: VARCHAR(255)
@@ -23,6 +22,10 @@ databaseChangeLog:
         - createSequence:
             sequenceName: category_id_seq
             incrementBy: 50
+        # Create sequence for product_id
+        - createSequence:
+            sequenceName: product_id_seq
+            incrementBy: 50
         # Create the product table
         - createTable:
             tableName: product
@@ -32,7 +35,7 @@ databaseChangeLog:
                   type: BIGINT
                   constraints:
                     primaryKey: true
-                    nullable: false
+                  defaultValue: "nextval('product_id_seq')"
               - column:
                   name: name
                   type: VARCHAR(255)
@@ -63,12 +66,6 @@ databaseChangeLog:
                   type: VARCHAR(50)
                   constraints:
                     nullable: false
-
-        # Create sequence for product_id
-        - createSequence:
-            sequenceName: product_id_seq
-            incrementBy: 50
-
         # Add foreign key constraint for category_id
         - addForeignKeyConstraint:
             baseTableName: product
