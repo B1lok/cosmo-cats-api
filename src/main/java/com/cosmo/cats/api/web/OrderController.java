@@ -1,6 +1,7 @@
 package com.cosmo.cats.api.web;
 
 import com.cosmo.cats.api.domain.order.Order;
+import com.cosmo.cats.api.domain.order.OrderContext;
 import com.cosmo.cats.api.dto.order.OrderRequestEntry;
 import com.cosmo.cats.api.service.OrderService;
 import com.cosmo.cats.api.web.mapper.OrderDtoMapper;
@@ -23,10 +24,10 @@ public class OrderController {
     private final OrderDtoMapper orderMapper;
 
     @PostMapping(value = {"", "/{cartId}"})
-    public ResponseEntity<Order> addProductToAnOrder(@PathVariable(required = false) String cartId,
-                                                     @RequestBody
+    public ResponseEntity<OrderContext> addProductToAnOrder(@PathVariable(required = false) String cartId,
+                                                            @RequestBody
                                                      @Valid List<OrderRequestEntry> productList) {
         var order = orderService.addToOrder(Optional.ofNullable(cartId), productList);
-        return ResponseEntity.ok(order);
+        return ResponseEntity.ok(orderMapper.toOrderContext(order));
     }
 }
