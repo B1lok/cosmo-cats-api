@@ -5,6 +5,7 @@ import com.cosmo.cats.api.domain.category.Category;
 import com.cosmo.cats.api.domain.product.Product;
 import com.cosmo.cats.api.repository.ProductRepository;
 import com.cosmo.cats.api.repository.entity.ProductEntity;
+import com.cosmo.cats.api.repository.projection.ProductProjection;
 import com.cosmo.cats.api.service.ProductService;
 import com.cosmo.cats.api.service.exception.DuplicateProductNameException;
 import com.cosmo.cats.api.service.exception.ProductNotFoundException;
@@ -24,6 +25,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<Product> getProducts() {
         return productMapper.toProductList(productRepository.findAll());
+    }
+
+    @Override
+    public List<ProductProjection> getMostOrderedProducts() {
+        return productRepository.findMostFrequentlyOrderedProduct();
     }
 
     @Override
@@ -96,5 +102,4 @@ public class ProductServiceImpl implements ProductService {
                 .id(id)
                 .build();
     }
-
 }
