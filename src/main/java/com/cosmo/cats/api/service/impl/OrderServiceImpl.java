@@ -8,6 +8,8 @@ import com.cosmo.cats.api.repository.ProductRepository;
 import com.cosmo.cats.api.repository.entity.OrderEntryEntity;
 import com.cosmo.cats.api.repository.entity.ProductEntity;
 import com.cosmo.cats.api.service.OrderService;
+import com.cosmo.cats.api.service.exception.OrderNotFoundException;
+import com.cosmo.cats.api.service.exception.ProductNotFoundException;
 import com.cosmo.cats.api.web.mapper.OrderDtoMapper;
 import com.cosmo.cats.api.web.mapper.OrderEntryMapper;
 import com.cosmo.cats.api.web.mapper.ProductDtoMapper;
@@ -20,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderEntryMapper orderEntryMapper;
 
     @Override
+    @Transactional
     public Order addToOrder(Optional<String> cartId,
                             List<OrderRequestEntry> orderRequestEntryList) {
         Order order;
@@ -40,7 +44,7 @@ public class OrderServiceImpl implements OrderService {
         } else {
             order = orderMapper.toOrder(
                     orderRepository.findByNaturalId(UUID.fromString(cartId.get())).orElseThrow(
-                            () -> new RuntimeException("An order with this id does not exist")));
+                            () -> new OrderNotFoundException(UUID.fromString(cartId.get()))));
         }
         var orderEntryList = getOrderEntryList(orderRequestEntryList);
 
@@ -49,11 +53,7 @@ public class OrderServiceImpl implements OrderService {
 
         var orderEntity = orderMapper.toOrderEntity(order);
         List<OrderEntryEntity> orderEntryEntities = newOrderEntries.stream()
-                .map((entry) -> {
-                    System.out.println(
-                            orderEntryMapper.toOrderEntryEntity(entry, orderEntity).getOrder());
-                    return orderEntryMapper.toOrderEntryEntity(entry, orderEntity);
-                }).toList();
+                .map((entry) -> orderEntryMapper.toOrderEntryEntity(entry, orderEntity)).toList();
         orderEntity.setOrderEntries(orderEntryEntities);
         orderEntity.setTotalPrice(totalPrice);
         orderRepository.save(orderEntity);
@@ -76,8 +76,8 @@ public class OrderServiceImpl implements OrderService {
                 .map(orderRequestEntry -> {
                     ProductEntity productEntity = productRepository
                             .findByNameIgnoreCase(orderRequestEntry.getProductName())
-                            .orElseThrow(() -> new IllegalArgumentException(
-                                    "Product not found: " + orderRequestEntry.getProductName()
+                            .orElseThrow(() -> new ProductNotFoundException(
+                                    orderRequestEntry.getProductName()
                             ));
                     var product = productMapper.toProductFromEntity(productEntity);
                     return OrderEntry.builder()

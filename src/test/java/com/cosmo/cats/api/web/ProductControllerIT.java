@@ -4,7 +4,7 @@ package com.cosmo.cats.api.web;
 import static com.cosmo.cats.api.domain.Wearer.CATS;
 import static com.cosmo.cats.api.domain.Wearer.KITTIES;
 import static com.cosmo.cats.api.service.exception.DuplicateProductNameException.PRODUCT_WITH_NAME_EXIST_MESSAGE;
-import static com.cosmo.cats.api.service.exception.ProductNotFoundException.PRODUCT_NOT_FOUND_MESSAGE;
+import static com.cosmo.cats.api.service.exception.ProductNotFoundException.PRODUCT_NOT_FOUND_ID;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -146,7 +146,7 @@ public class ProductControllerIT extends AbstractIt {
   @SneakyThrows
   void shouldThrowProductNotFoundException() {
     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
-        String.format(PRODUCT_NOT_FOUND_MESSAGE, "999"));
+        String.format(PRODUCT_NOT_FOUND_ID, "999"));
     problemDetail.setType(URI.create("product-not-found"));
     problemDetail.setTitle("Product not found");
 
