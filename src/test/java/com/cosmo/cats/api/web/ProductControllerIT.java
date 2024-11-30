@@ -27,6 +27,7 @@ import com.cosmo.cats.api.dto.product.ProductUpdateDto;
 import com.cosmo.cats.api.dto.product.advisor.MarketComparisonDto;
 import com.cosmo.cats.api.dto.product.advisor.ProductAdvisorResponseDto;
 import com.cosmo.cats.api.featuretoggle.FeatureToggleExtension;
+import com.cosmo.cats.api.repository.OrderRepository;
 import com.cosmo.cats.api.repository.ProductRepository;
 import com.cosmo.cats.api.service.ProductAdvisorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,6 +67,8 @@ public class ProductControllerIT extends AbstractIt {
   @Autowired
   ProductRepository productRepository;
   @Autowired
+  OrderRepository orderRepository;
+  @Autowired
   ObjectMapper objectMapper;
   @SpyBean
   ProductAdvisorService productAdvisorService;
@@ -102,8 +105,18 @@ public class ProductControllerIT extends AbstractIt {
 
   @AfterEach
   void setUp() {
+    orderRepository.deleteAll();
     productRepository.deleteAll();
     reset(productAdvisorService);
+  }
+  @Test
+  @SneakyThrows
+  @Sql({"/sql/products-create.sql", "/sql/order-create.sql", "/sql/order-entry-create.sql"})
+  public void shouldAnalyzeProducts(){
+    mockMvc.perform(get(URL + "/analyze"))
+            .andExpectAll(status().isOk(),
+                    jsonPath("$.length()").value(2),
+                    jsonPath("$[0].name").value("Cat Star Scratcher"));
   }
 
   @Test
@@ -159,7 +172,7 @@ public class ProductControllerIT extends AbstractIt {
   @SneakyThrows
   @Sql("/sql/products-create.sql")
   void shouldDeleteProduct() {
-    mockMvc.perform(delete(URL + "/{id}", 1L))
+    mockMvc.perform(delete(URL + "/{id}", 2L))
         .andExpect(status().isNoContent());
 
     var length = productRepository.findAll().size();
@@ -274,6 +287,7 @@ public class ProductControllerIT extends AbstractIt {
             content().json(objectMapper.writeValueAsString(problemDetail)));
   }
 
+
   private ProductAdvisorResponseDto buildProductAdvisorResponseDto() {
     return ProductAdvisorResponseDto.builder()
         .originalMarketPrice(BigDecimal.valueOf(100))
@@ -291,6 +305,4 @@ public class ProductControllerIT extends AbstractIt {
                     .build())
         ).build();
   }
-
-
 }
